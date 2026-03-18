@@ -1,5 +1,6 @@
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
+from app.api.urls import router as url_router
 
 app = FastAPI(
     title="URL Shortner API",
@@ -14,6 +15,8 @@ app.add_middleware(
     allow_methods=["*"],
     allow_headers=["*"],
 )
+
+app.include_router(url_router, tags=["URLs"])
 
 @app.get("/")
 async def root():
