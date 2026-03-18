@@ -22,6 +22,22 @@ async def get_url_info(short_code: str, db: AsyncSession = Depends(get_db)):
         raise HTTPException(status_code=404, detail="URL not found")
     return db_url
 
+@router.get("/analytics/{short_code}")
+async def get_analytics(short_code: str, db: AsyncSession = Depends(get_db)):
+    db_url = await get_url_by_code(db, short_code)
+    if not db_url:
+        raise HTTPException(status_code=404, detail="URL not found")
+    
+    return {
+        "short_code": db_url.short_code,
+        "original_url": db_url.original_url,
+        "click_count": db_url.click_count,
+        "created_at": db_url.created_at,
+        "is_active": db_url.is_active,
+        "custom_alias": db_url.custom_alias,
+        "expires_at": db_url.expires_at
+    }
+
 @router.get("/{short_code}")
 async def redirect_url(short_code: str, db: AsyncSession = Depends(get_db)):
     cached_url = await get_cached_url(short_code)
