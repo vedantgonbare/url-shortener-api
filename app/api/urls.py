@@ -1,4 +1,4 @@
-from fastapi import APIRouter, Depends, HTTPException
+from fastapi import APIRouter, Depends, HTTPException, Request
 from fastapi.responses import RedirectResponse
 from sqlalchemy.ext.asyncio import AsyncSession
 from app.db.database import get_db
@@ -6,11 +6,19 @@ from app.schemas.url import URLCreate, URLResponse
 from app.services.url_service import create_short_url, get_url_by_code, increment_click
 from app.services.cache_service import get_cached_url, cache_url
 from datetime import datetime
+from slowapi import Limiter
+from slowapi.util import get_remote_address
+
+#  We recreate the same limiter here with the same key_func
+# SlowAPI automatically syncs this with the one in main.py
+# via app.state.limiter — they work as one unit
+limiter = Limiter(key_func=get_remote_address)
 
 router = APIRouter()
 
 @router.post("/shorten", response_model=URLResponse)
-async def shorten_url(url_data: URLCreate, db: AsyncSession = Depends(get_db)):
+@limiter.limit("5/minute")
+async def shorten_url(request: Request, url_data: URLCreate, db: AsyncSession = Depends(get_db)):
     db_url = await create_short_url(db, url_data)
     await cache_url(db_url.short_code, db_url.original_url)
     return db_url
