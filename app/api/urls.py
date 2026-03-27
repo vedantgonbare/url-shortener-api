@@ -8,6 +8,9 @@ from app.services.cache_service import get_cached_url, cache_url
 from datetime import datetime
 from slowapi import Limiter
 from slowapi.util import get_remote_address
+import qrcode
+import io
+from fastapi.responses import StreamingResponse
 
 #  We recreate the same limiter here with the same key_func
 # SlowAPI automatically syncs this with the one in main.py
@@ -62,3 +65,45 @@ async def redirect_url(short_code: str, db: AsyncSession = Depends(get_db)):
     await cache_url(short_code, db_url.original_url)
     await increment_click(db, short_code)
     return RedirectResponse(url=db_url.original_url)
+
+
+# 🧠 BASE_URL is the root of your deployed API
+# We build the full short URL by combining it with the short_code
+# e.g. https://your-api.onrender.com/abc123
+BASE_URL = "https://url-shortener-api-ycp9.onrender.com"
+
+@router.get("/qr/{short_code}")
+async def generate_qr(short_code: str, db: AsyncSession = Depends(get_db)):
+    
+    # Step 1: Check if this short_code exists in DB
+    db_url = await get_url_by_code(db, short_code)
+    if not db_url:
+        raise HTTPException(status_code=404, detail="URL not found")
+
+    # Step 2: Build the full shortened URL
+    # This is the URL the QR code will point to
+    short_url = f"{BASE_URL}/{short_code}"
+
+    # Step 3: Generate the QR code
+    # qr.make(fit=True) → auto-sizes the QR code to fit the data
+    # box_size=10 → each QR "box" is 10 pixels
+    # border=4 → standard QR border (called "quiet zone")
+    qr = qrcode.QRCode(box_size=10, border=4)
+    qr.add_data(short_url)
+    qr.make(fit=True)
+
+    # Step 4: Convert to image
+    # fill_color/back_color → black on white (standard QR)
+    img = qr.make_image(fill_color="black", back_color="white")
+
+    # Step 5: Save image to memory buffer (not disk!)
+    # BytesIO() = a file-like object that lives in RAM
+    # img.save(buf) → writes PNG bytes into the buffer
+    # buf.seek(0) → rewind to start so we can read it back
+    buf = io.BytesIO()
+    img.save(buf, format="PNG")
+    buf.seek(0)
+
+    # Step 6: Return as image response
+    # media_type="image/png" tells browser: this is an image
+    return StreamingResponse(buf, media_type="image/png")
