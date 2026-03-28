@@ -10,14 +10,15 @@ def generate_short_code(length: int = 6) -> str:
     characters = string.ascii_letters + string.digits
     return ''.join(secrets.choice(characters) for _ in range(length))
 
-async def create_short_url(db: AsyncSession, url_data: URLCreate) -> URL:
+async def create_short_url(db: AsyncSession, url_data: URLCreate, user_id: int = None) -> URL:
     short_code = url_data.custom_alias or generate_short_code()
-    
+
     db_url = URL(
         original_url=str(url_data.original_url),
         short_code=short_code,
         custom_alias=url_data.custom_alias,
-        expires_at=url_data.expires_at
+        expires_at=url_data.expires_at,
+        user_id=user_id  # 👈 links URL to logged-in user (None for anonymous)
     )
 
     db.add(db_url)

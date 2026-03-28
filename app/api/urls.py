@@ -11,6 +11,9 @@ from slowapi.util import get_remote_address
 import qrcode
 import io
 from fastapi.responses import StreamingResponse
+from app.core.dependencies import get_current_user
+from app.models.user import User
+from typing import Optional
 
 #  We recreate the same limiter here with the same key_func
 # SlowAPI automatically syncs this with the one in main.py
@@ -22,7 +25,24 @@ router = APIRouter()
 @router.post("/shorten", response_model=URLResponse)
 @limiter.limit("5/minute")
 async def shorten_url(request: Request, url_data: URLCreate, db: AsyncSession = Depends(get_db)):
-    db_url = await create_short_url(db, url_data)
+    # Extract user from JWT token if present (optional auth)
+    current_user = None
+    try:
+        auth_header = request.headers.get("Authorization")
+        if auth_header and auth_header.startswith("Bearer "):
+            token = auth_header.split(" ")[1]
+            from app.core.security import decode_access_token
+            from sqlalchemy import select
+            from app.models.user import User
+            email = decode_access_token(token)
+            if email:
+                result = await db.execute(select(User).where(User.email == email))
+                current_user = result.scalar_one_or_none()
+    except Exception:
+        pass
+
+    user_id = current_user.id if current_user else None
+    db_url = await create_short_url(db, url_data, user_id=user_id)
     await cache_url(db_url.short_code, db_url.original_url)
     return db_url
 
