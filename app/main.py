@@ -5,6 +5,7 @@ from slowapi.util import get_remote_address
 from slowapi.errors import RateLimitExceeded
 from app.api.urls import router as url_router
 from app.api.auth import router as auth_router
+from app.api.dashboard import router as dashboard_router
 
 # 🧠 get_remote_address is a function from slowapi
 # It extracts the IP address from the incoming request
@@ -37,6 +38,7 @@ app.add_middleware(
 
 app.include_router(url_router, tags=["URLs"])
 app.include_router(auth_router)
+app.include_router(dashboard_router)
 
 @app.get("/")
 async def root():
