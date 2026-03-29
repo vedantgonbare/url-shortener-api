@@ -7,9 +7,6 @@ from app.api.urls import router as url_router
 from app.api.auth import router as auth_router
 from app.api.dashboard import router as dashboard_router
 
-# 🧠 get_remote_address is a function from slowapi
-# It extracts the IP address from the incoming request
-# This is how the limiter knows WHO is making requests
 limiter = Limiter(key_func=get_remote_address)
 
 app = FastAPI(
@@ -18,14 +15,8 @@ app = FastAPI(
     version="1.0.0"
 )
 
-# 🧠 We attach the limiter to the app's state
-# app.state is a place FastAPI gives you to store
-# custom objects that need to be accessible everywhere
 app.state.limiter = limiter
 
-# 🧠 This registers a custom error handler
-# When rate limit is exceeded, instead of a crash,
-# it returns a proper 429 Too Many Requests response
 app.add_exception_handler(RateLimitExceeded, _rate_limit_exceeded_handler)
 
 app.add_middleware(
