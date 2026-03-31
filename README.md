@@ -1,205 +1,181 @@
-# 🔗 URL Shortener API
+# 🔗 LinkSnap — URL Shortener with Analytics
 
-A production-ready URL Shortener REST API built with **FastAPI**, **PostgreSQL**, and **Redis** — similar to Bitly or TinyURL. Features async database access, Redis caching for ultra-fast redirects, click analytics, and custom aliases.
+> Create short, powerful links with real-time analytics, QR codes, and a beautiful dashboard.
 
-**🌐 Live Demo:** https://url-shortener-api-ycp9.onrender.com/docs
+**Live Demo:** [url-shortener-frontend-khaki.vercel.app](https://url-shortener-frontend-khaki.vercel.app)
 
 ---
 
 ## ✨ Features
 
-- **Shorten URLs** — Generate random 6-character short codes instantly
-- **Custom Aliases** — Create memorable short links (e.g. `/mygithub`)
-- **Fast Redirects** — Redis cache-aside pattern for sub-millisecond lookups
-- **Click Analytics** — Track how many times each short link is visited
-- **Async Architecture** — Fully async with SQLAlchemy + AsyncPG
-- **Auto Docs** — Interactive Swagger UI at `/docs`
-- **Docker Ready** — Containerized with Docker + docker-compose
+- **URL Shortening** — Instantly shorten any long URL with a custom or auto-generated short code
+- **QR Code Generation** — Automatically generate a scannable QR code for every shortened link
+- **Real-time Analytics** — Track clicks, active links, and usage stats from your dashboard
+- **User Authentication** — Secure JWT-based register/login system
+- **Personal Dashboard** — Manage all your links in one place
+- **Copy to Clipboard** — One-click copy for shortened URLs
+- **Redis Caching** — Fast URL redirects powered by Redis cache
+- **Rate Limiting** — API protection with SlowAPI rate limiting
 
 ---
 
-## 🛠 Tech Stack
+## 🛠️ Tech Stack
 
-| Technology | Version | Purpose |
-|---|---|---|
-| FastAPI | 0.135.1 | Web framework |
-| Uvicorn | 0.41.0 | ASGI server |
-| SQLAlchemy | 2.0.48 | Async ORM |
-| Alembic | 1.18.4 | Database migrations |
-| PostgreSQL | 17 | Primary database |
-| AsyncPG | 0.31.0 | Async PostgreSQL driver |
-| Redis | 7.3.0 | Caching layer |
-| Pydantic | 2.12.5 | Data validation |
-| Docker | latest | Containerization |
+### Frontend
+| Technology | Purpose |
+|---|---|
+| React.js | UI framework |
+| Axios | HTTP client |
+| React Router | Client-side routing |
+| Vercel | Deployment & hosting |
 
----
-
-## 📡 API Endpoints
-
-| Method | Endpoint | Description |
-|---|---|---|
-| `POST` | `/shorten` | Create a short URL |
-| `GET` | `/{short_code}` | Redirect to original URL |
-| `GET` | `/info/{short_code}` | Get URL details |
-| `GET` | `/analytics/{short_code}` | Get click analytics |
-| `GET` | `/health` | Health check |
+### Backend
+| Technology | Purpose |
+|---|---|
+| FastAPI | REST API framework |
+| PostgreSQL | Primary database |
+| SQLAlchemy | ORM |
+| Alembic | Database migrations |
+| Redis | Caching layer |
+| JWT (python-jose) | Authentication tokens |
+| bcrypt / passlib | Password hashing |
+| qrcode | QR code generation |
+| Render | Deployment & hosting |
 
 ---
 
-## 🚀 Quick Start
+## 🏗️ Architecture
+
+```
+┌─────────────────┐         ┌─────────────────┐
+│                 │  HTTPS  │                 │
+│  React Frontend │ ──────► │  FastAPI Backend │
+│  (Vercel)       │         │  (Render)        │
+│                 │         │                 │
+└─────────────────┘         └────────┬────────┘
+                                      │
+                          ┌───────────┼───────────┐
+                          │           │           │
+                    ┌─────▼─────┐ ┌───▼───┐  ┌───▼──────┐
+                    │ PostgreSQL│ │ Redis │  │ QR Code  │
+                    │ Database  │ │ Cache │  │ Generator│
+                    └───────────┘ └───────┘  └──────────┘
+```
+
+---
+
+## 🚀 Getting Started
 
 ### Prerequisites
-- Python 3.12+
+- Python 3.10+
+- Node.js 18+
 - PostgreSQL
 - Redis
-- Docker (optional)
 
-### Local Setup
+### Backend Setup
 
 ```bash
 # Clone the repo
 git clone https://github.com/vedantgonbare/url-shortener-api
 cd url-shortener-api
 
-# Create and activate virtual environment
+# Create virtual environment
 python -m venv venv
-venv\Scripts\activate  # Windows
-source venv/bin/activate  # Mac/Linux
+source venv/bin/activate  # Windows: venv\Scripts\activate
 
 # Install dependencies
 pip install -r requirements.txt
 
-# Create .env file
+# Set up environment variables
 cp .env.example .env
-# Fill in your DATABASE_URL, REDIS_URL, SECRET_KEY
-```
+# Edit .env with your DATABASE_URL, SECRET_KEY, REDIS_URL
 
-### Run with Docker
-
-```bash
-docker-compose up --build
-```
-
-API will be available at `http://localhost:8000/docs`
-
-### Run without Docker
-
-```bash
-# Apply database migrations
+# Run database migrations
 alembic upgrade head
 
 # Start the server
 uvicorn app.main:app --reload
 ```
 
----
+### Frontend Setup
 
-## ⚙️ Environment Variables
-
-Create a `.env` file in the root directory:
-
-```env
-DATABASE_URL=postgresql://user:password@localhost:5432/urlshortener
-REDIS_URL=redis://localhost:6379
-SECRET_KEY=your-secret-key
-ALGORITHM=HS256
-```
-
----
-
-## 📁 Project Structure
-
-```
-url-shortener-api/
-├── alembic/               # Database migrations
-├── app/
-│   ├── api/
-│   │   └── urls.py        # API route handlers
-│   ├── core/
-│   │   └── __init__.py    # App settings
-│   ├── db/
-│   │   └── database.py    # DB connection & session
-│   ├── models/
-│   │   └── url.py         # SQLAlchemy table definition
-│   ├── schemas/
-│   │   └── url.py         # Pydantic request/response models
-│   ├── services/
-│   │   ├── url_service.py # Core business logic
-│   │   └── cache_service.py # Redis caching logic
-│   └── main.py            # FastAPI app entry point
-├── .env                   # Environment variables (not committed)
-├── Dockerfile
-├── docker-compose.yml
-├── requirements.txt
-└── alembic.ini
-```
-
----
-
-## 🔄 How It Works
-
-### URL Shortening
-1. User sends `POST /shorten` with `original_url`
-2. API generates a cryptographically secure 6-character short code
-3. URL is saved to PostgreSQL
-4. Short code is returned to user
-
-### Redirect Flow (Cache-Aside Pattern)
-1. User visits `/{short_code}`
-2. API checks Redis cache first
-3. **Cache HIT** → redirect instantly (< 1ms)
-4. **Cache MISS** → query PostgreSQL, save to Redis, redirect
-5. Click count incremented on every visit
-
----
-
-## 📊 Example Usage
-
-**Shorten a URL:**
 ```bash
-curl -X POST https://url-shortener-api-ycp9.onrender.com/shorten \
-  -H "Content-Type: application/json" \
-  -d '{"original_url": "https://github.com/vedantgonbare"}'
+# Clone the repo
+git clone https://github.com/vedantgonbare/url-shortener-frontend
+cd url-shortener-frontend
+
+# Install dependencies
+npm install
+
+# Set up environment variables
+echo "REACT_APP_API_URL=http://localhost:8000" > .env
+
+# Start the app
+npm start
 ```
 
-**Response:**
-```json
-{
-  "id": 1,
-  "original_url": "https://github.com/vedantgonbare",
-  "short_code": "66gwDm",
-  "custom_alias": null,
-  "click_count": 0,
-  "is_active": true,
-  "created_at": "2026-03-19T07:43:53.855028Z"
-}
-```
+---
 
-**Use the short link:**
-```
-https://url-shortener-api-ycp9.onrender.com/66gwDm
-→ Redirects to https://github.com/vedantgonbare
-```
+## 📡 API Endpoints
+
+| Method | Endpoint | Description | Auth |
+|---|---|---|---|
+| POST | `/auth/register` | Register new user | ❌ |
+| POST | `/auth/login` | Login & get JWT token | ❌ |
+| POST | `/shorten` | Shorten a URL | ✅ |
+| GET | `/{short_code}` | Redirect to original URL | ❌ |
+| GET | `/info/{short_code}` | Get URL info | ❌ |
+| GET | `/analytics/{short_code}` | Get click analytics | ✅ |
+| GET | `/dashboard/` | Get user dashboard | ✅ |
+
+Full API docs available at: [`/docs`](https://url-shortener-api-ycp9.onrender.com/docs)
 
 ---
 
 ## 🌐 Deployment
 
-Deployed on **Render.com** (Frankfurt — EU Central):
-- Web Service: FastAPI + Uvicorn
-- Database: PostgreSQL 18 (Render managed)
-- Cache: Redis (Upstash)
-- Migrations run automatically on every deploy via build command
+| Service | Platform | URL |
+|---|---|---|
+| Frontend | Vercel | [url-shortener-frontend-khaki.vercel.app](https://url-shortener-frontend-khaki.vercel.app) |
+| Backend API | Render | [url-shortener-api-ycp9.onrender.com](https://url-shortener-api-ycp9.onrender.com) |
+
+---
+
+## 📸 Screenshots
+
+### Landing Page
+> Clean, modern landing page with instant URL shortening
+
+### Dashboard
+> Personal dashboard showing all links, click stats, and QR codes
+
+---
+
+## 🔒 Environment Variables
+
+### Backend (`.env`)
+```
+DATABASE_URL=postgresql://...
+SECRET_KEY=your-secret-key
+ALGORITHM=HS256
+REDIS_URL=redis://...
+```
+
+### Frontend (`.env`)
+```
+REACT_APP_API_URL=https://url-shortener-api-ycp9.onrender.com
+```
 
 ---
 
 ## 👨‍💻 Author
 
-**Vedant Gonbare**  
-BSc IT | Mumbai
-[GitHub](https://github.com/vedantgonbare)
+**Vedant Gonbare**
+- GitHub: [@vedantgonbare](https://github.com/vedantgonbare)
+- LinkedIn: [linkedin.com/in/vedantgonbare](https://linkedin.com/in/vedantgonbare)
 
 ---
 
+## 📄 License
 
-
+This project is open source and available under the [MIT License](LICENSE).
