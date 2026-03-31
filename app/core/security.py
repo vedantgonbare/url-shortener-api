@@ -11,7 +11,7 @@ from app.core.config import settings
 # CryptContext → tells passlib to use bcrypt algorithm
 # bcrypt automatically salts and hashes passwords
 # "deprecated=auto" → auto-upgrade old hashes if needed
-pwd_context = CryptContext(schemes=["bcrypt"], deprecated="auto")
+pwd_context = CryptContext(schemes=["bcrypt"], deprecated="auto", bcrypt__ident="2b")
 
 # ─── PASSWORD FUNCTIONS ───────────────────────────────────────────
 
